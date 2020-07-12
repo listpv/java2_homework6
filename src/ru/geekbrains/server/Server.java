@@ -16,6 +16,7 @@ public class Server
 
         try
         {
+            AuthService.connect();
             server = new ServerSocket(8189);
             System.out.println("Сервер запущен. Ожидаем подключения... .");
             clients = new Vector<>();
@@ -24,7 +25,7 @@ public class Server
             {
                 socket = server.accept();
                 System.out.println("Клиент подключился.");
-                clients.add(new ClientHandler(this, socket));
+                new ClientHandler(this, socket);
             }
         }
         catch (IOException e)
@@ -48,7 +49,18 @@ public class Server
             {
                 e.printStackTrace();
             }
+            AuthService.disconnect();
         }
+    }
+
+    public void subscribe(ClientHandler client)
+    {
+        clients.add(client);
+    }
+
+    public void unsubscribe(ClientHandler client)
+    {
+        clients.remove(client);
     }
 
     public void broadcastMsg(String msg)
@@ -60,16 +72,28 @@ public class Server
 
     }
 
-    public void removeClient(Socket sc)    // удаление элемента
+    public void broadcasting(String nick1, String nick2, String msg)
     {
-        for(ClientHandler o : clients)
+        for(ClientHandler o: clients)
         {
-            if(o.getSocket() == sc)
+            if(o.getNick().equalsIgnoreCase(nick1) || o.getNick().equalsIgnoreCase(nick2))
             {
-                clients.remove(o);
-                System.out.println("Удалён.");
+                o.sendMsg(msg);
             }
         }
+    }
+
+    // метод, проверяющий наличие пользователя
+    public boolean isNickAlready(String nick)
+    {
+        for (ClientHandler o: clients)
+        {
+            if(o.getNick().equals(nick))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
 

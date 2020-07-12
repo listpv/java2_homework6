@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 
@@ -19,21 +20,68 @@ public class ClientConsole
     final int PORT = 8189;
     Scanner sc;
 
-    public ClientConsole()
-    {
+    public ClientConsole() throws IOException {
         try
         {
             socket = new Socket(IP_ADDRESS, PORT);
-            System.out.println("Client");
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
             sc = new Scanner(System.in);
+            boolean flag = true;
+            while (true)
+            {
+                String str = in.readUTF();
+                if (str.equals("это сервер /end"))
+                {
+                    out.writeUTF("это клиент /end");
+                    break;
+                }
+                System.out.println( str);
+//                String scannerStr = sc.nextLine();
+                String var;
+                boolean stp = false;
+                ArrayList<String> arString = new ArrayList<>();
+                while (true)
+                {
+                    var = sc.nextLine();
+                    if(var.equalsIgnoreCase("/end"))
+                    {
+                        stp = true;
+                        break;
+                    }
+                    if(var.equalsIgnoreCase("*/*"))
+                    {
+                        break;
+                    }
+                    arString.add(var);
+                }
+                if(stp)
+                {
+                    out.writeUTF("это клиент /end");
+                }
+                else {
+                    out.writeUTF("это клиент " + arString);
+                }
+
+            }
         }
         catch (IOException e)
         {
             e.printStackTrace();
         }
-        new Thread(new Runnable()
+        finally
+        {
+            try
+            {
+                socket.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+
+        }
+/*        new Thread(new Runnable()
         {
             @Override
             public void run()
@@ -42,14 +90,16 @@ public class ClientConsole
                 {
                     while (true)
                     {
-                        String scannerStr = sc.nextLine();
-                        out.writeUTF("это клиент " + scannerStr);
+//                        String scannerStr = sc.nextLine();
+//                        out.writeUTF("это клиент " + scannerStr);
                         String str = in.readUTF();
                         if (str.equals("это сервер /end"))
                         {
                             break;
                         }
                         System.out.println( str);
+                        String scannerStr = sc.nextLine();
+                        out.writeUTF("это клиент " + scannerStr);
 
                     }
                 }
@@ -58,7 +108,8 @@ public class ClientConsole
                     e.printStackTrace();
                 }
             }
-        }).start();
+        }).start();*/
+
     }
 
 }
