@@ -53,4 +53,9 @@ public class AuthService
             throwables.printStackTrace();
         }
     }
+
+    public static Statement getStatement()
+    {
+        return statement;
+    }
 }

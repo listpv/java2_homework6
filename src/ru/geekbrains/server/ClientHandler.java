@@ -6,6 +6,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClientHandler
 {
@@ -16,7 +20,8 @@ public class ClientHandler
     private String nick;
 
     public ClientHandler(Server server, Socket socket) {
-        try {
+        try
+        {
             this.socket = socket;
             this.server = server;
             this.in = new DataInputStream(socket.getInputStream());
@@ -55,18 +60,25 @@ public class ClientHandler
                         while (true)
                         {
                             String str = in.readUTF();
-                            if (str.equals("/end"))
+                            if(str.startsWith("/"))
                             {
-                                out.writeUTF("/serverClosed");
-                                break;
-                            }
-                            else if(str.startsWith("/w"))
-                            {
-                                isOneClient(str);
+                                if (str.equals("/end"))
+                                {
+                                    out.writeUTF("/serverClosed");
+                                    break;
+                                }
+                                if(str.startsWith("/w"))
+                                {
+                                    server.sendPersonalMessage(ClientHandler.this, str);
+                                }
+                                if (str.startsWith("/blacklist"))
+                                {
+                                    addToBlacklist(str);
+                                }
                             }
                             else
                                 {
-                                    server.broadcastMsg(nick + ": " + str);
+                                    server.broadcastMsg(ClientHandler.this, str);
                                 }
 
                         }
@@ -118,26 +130,41 @@ public class ClientHandler
         }
     }
 
-    // метод, обрабатывающий личные сообщения.
-    public void isOneClient(@NotNull String str)
+
+    // метод добавляет в чёрный списокю
+    public void addToBlacklist(String str)
     {
         String[] tokens = str.split(" ");
-        if (!server.isNickAlready(tokens[1]))
+        String sql = String.format("insert into blacklist (`snick`, `blnick`) VALUES ('%s', '%s')", nick, tokens[1]);
+        try
         {
-            sendMsg("Пользователь " + tokens[1] + " не активен.");
-            return;
+            AuthService.getStatement().executeQuery(sql);
         }
-        String string ="";
-        for(int i = 2; i < tokens.length; i++)
+        catch (SQLException throwables)
         {
-            string += tokens[i];
-            if(i < (tokens.length - 1))
-            {
-                string += " ";
-            }
+            throwables.printStackTrace();
+        }
+        sendMsg("Вы добавили пользователя " + tokens[1] + " в чёрный список.");
 
+    }
+
+    // метод проверяет, есть ли в чёрном списке.
+    public boolean checkBlacklist(String nick)
+    {
+        String sql = String.format("select * from blacklist where snick = '%s' and blnick = '%s'", this.nick, nick);
+        try
+        {
+            ResultSet rs = AuthService.getStatement().executeQuery(sql);
+            if(rs.next())
+            {
+                return  true;
+            }
         }
-        server.broadcasting(nick, tokens[1], nick + ": " + string);
+        catch (SQLException throwables)
+        {
+            throwables.printStackTrace();
+        }
+        return false;
     }
 
     public String getNick()

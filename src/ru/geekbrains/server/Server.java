@@ -56,29 +56,53 @@ public class Server
     public void subscribe(ClientHandler client)
     {
         clients.add(client);
+        broadcastClientList();
     }
 
     public void unsubscribe(ClientHandler client)
     {
         clients.remove(client);
+        broadcastClientList();
     }
 
-    public void broadcastMsg(String msg)
+    public void broadcastMsg(ClientHandler from, String msg)
     {
         for (ClientHandler o: clients)
         {
-            o.sendMsg(msg);
+            if(!o.checkBlacklist(from.getNick()))
+            {
+                if(!o.getNick().equals(from.getNick()))
+                {
+                    o.sendMsg("@!@FROM from " + from.getNick() + ": " + msg);
+                }
+                else
+                {
+                    from.sendMsg("@!@TO to everyone : " + msg);
+                }
+            }
         }
 
     }
 
-    public void broadcasting(String nick1, String nick2, String msg)
+    public void sendPersonalMessage(ClientHandler from, String str)
     {
+
+        String[] tokens = str.split(" ", 3);
+        if (!isNickAlready(tokens[1]))
+        {
+            from.sendMsg("@!@TO Пользователь " + tokens[1] + " не активен.");
+            return;
+        }
         for(ClientHandler o: clients)
         {
-            if(o.getNick().equalsIgnoreCase(nick1) || o.getNick().equalsIgnoreCase(nick2))
+            if(o.getNick().equals(tokens[1]))
             {
-                o.sendMsg(msg);
+                if(o.checkBlacklist(from.getNick()))
+                {
+                    return;
+                }
+                o.sendMsg("@!@FROM from " + from.getNick() + ": " + tokens[2]);
+                from.sendMsg("@!@TO to " + tokens[1] + ": " + tokens[2]);
             }
         }
     }
@@ -94,6 +118,22 @@ public class Server
             }
         }
         return false;
+    }
+
+    public void broadcastClientList()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.append("/clientlist ");
+        for(ClientHandler o : clients)
+        {
+            sb.append(o.getNick() + " ");
+        }
+        String out = sb.toString();
+
+        for(ClientHandler o : clients)
+        {
+            o.sendMsg(out);
+        }
     }
 
 

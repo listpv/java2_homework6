@@ -12,7 +12,8 @@
 <?import java.net.URL?>
 
 <?import javafx.scene.control.PasswordField?>
-<VBox fx:controller="ru.geekbrains.client.Controller" xmlns:fx="http://javafx.com/fxml" alignment="center">
+<?import javafx.scene.control.ListView?>
+<VBox fx:controller="ru.geekbrains.client.Controller" xmlns:fx="http://javafx.com/fxml" alignment="CENTER">
     <stylesheets><URL value = "@/ css/Style.css"/></stylesheets>
 
     <HBox fx:id="upperPanel">
@@ -21,10 +22,15 @@
         <Button text="Авторизоваться" onAction="#tryToAuth"/>
     </HBox>
 
-    <TextArea fx:id="textArea" editable = "false" VBox.vgrow="ALWAYS"/>
+    <HBox VBox.vgrow="ALWAYS">
+        <VBox fx:id="vBoxChat" HBox.hgrow="ALWAYS"/>
+        <ListView fx:id="clientList" managed="false" visible="false"/>
+    </HBox>
+
     <HBox fx:id="bottomPanel" managed="false" visible="false">
         <TextField fx:id="textField" HBox.hgrow="ALWAYS" promptText="Введите сообщение" onAction="#sendMessage"/>
         <Button fx:id="btn1" text="Send Msg" onAction="#sendMessage"/>
     </HBox>
+
 </VBox>
 
